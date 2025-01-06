@@ -2,7 +2,7 @@ import {pool} from "../db.js";
 import {
     GetSalesCustomerTrackerValidation,
     SaleProductValidation,
-    SalesCustomerTrackerValidation
+    SalesCustomerTrackerValidation, SalesInvoiceValidation
 } from "../validation/SaleValidation.js";
 
 const SaleProductService = async (req) => {
@@ -58,7 +58,7 @@ const SalesCustomerTrackerService = async (req) => {
         );
 
         await pool.query(
-            `INSERT INTO customerledger (customerid, paymenttype, credit, debit, balance, voucherno)
+            `INSERT INTO customerledger  (customerid, paymenttype, credit, debit, balance, voucherno)
              VALUES ($1, $2, $3, $4, $5, $6)`,
             [customerid, paymenttype, totalcost, paid, balance, voucherno]
         );
@@ -116,4 +116,40 @@ const GetSalesCustomerTrackerService = async (req) => {
     }
 }
 
-export {SaleProductService,SalesCustomerTrackerService,GetSalesCustomerTrackerService}
+const SalesInvoiceService = async (req) => {
+    const { customerid, fromdate, todate } = req.query;
+    console.log("query : ", req.query);
+    const { error } = SalesInvoiceValidation.validate(req.query);
+    if (error) {
+        return { code: 400,status:"fail",message: "Validation Error", data: error.details[0].message };
+    }
+    const CustomerID = parseInt(customerid);
+    let query = `
+        select c.name,cl.voucherno, cl.balance,cl.debit,cl.credit, TO_CHAR(cl.updatedat, 'YYYY-MM-DD') AS date
+            from customerledger cl
+        inner join customer c on c.id = cl.customerid
+        `
+    const queryParams = [];
+    if(CustomerID){
+        query += ` where customerid = $${queryParams.length + 1}`;
+        queryParams.push(CustomerID);
+    }
+    if (fromdate) {
+        query += ` AND DATE(cl.createdat) >= $${queryParams.length + 1}`;
+        queryParams.push(fromdate);
+    }
+    if (todate) {
+        query += ` AND DATE(cl.createdat) <= $${queryParams.length + 1}`;
+        queryParams.push(todate);
+    }
+    try{
+        const result = await pool.query(query, queryParams);
+        return { code: 201, status: "success", message: "Executed Successfully", data: result.rows };
+
+    }catch (e) {
+        console.error(e);
+        return { code: 500, status: "fail", message: e.message  };
+    }
+}
+export {SaleProductService,SalesCustomerTrackerService,GetSalesCustomerTrackerService,SalesInvoiceService}
+

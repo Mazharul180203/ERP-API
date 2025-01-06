@@ -21,6 +21,7 @@ router.post('/units',AuthVarification,ProductController.units)
 router.post('/product',AuthVarification,ProductController.product)
 router.post('/stock',AuthVarification,ProductController.stock)
 router.post('/purchasesuppliertracker',AuthVarification,ProductController.purchasesuppliertracker)
+router.get('/supplierpurchaseinvoice',AuthVarification,ProductController.supplierpurchaseinvoice)
 
 router.post('/supplier',AuthVarification,ProductController.supplier)
 router.get('/getpurchasesuppliertracker/:supplierid',AuthVarification,ProductController.getpurchasesuppliertracker)
@@ -29,10 +30,12 @@ router.get('/dropdown/:type',AuthVarification,DropdownController.dropdown)
 
 router.post('/customertype',AuthVarification,CustomerController.customertype)
 router.post('/customer',AuthVarification,CustomerController.customer)
+router.get('/customerledgerinvoice',AuthVarification,CustomerController.customerledgerinvoice)
 
 router.post('/saleproduct',AuthVarification,SaleController.saleproduct)
 router.post('/salesCustomerTracker',AuthVarification,SaleController.salesCustomerTracker)
 router.get('/getsalescustomertracker/:customerid',AuthVarification,SaleController.getsalescustomertracker)
+router.get('/salesinvoice',AuthVarification,SaleController.salesinvoice)
 
 
 

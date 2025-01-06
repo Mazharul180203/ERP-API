@@ -24,10 +24,10 @@ export const supplierValidation = Joi.object({
 
 export const ProductValidation = Joi.object({
     name: Joi.string().required(),
-    categoryId: Joi.number().integer().required(),
+    categoryid: Joi.number().integer().required(),
     description: Joi.string().required(),
-    brandId: Joi.number().integer().required(),
-    unitId: Joi.number().integer().required(),
+    brandid: Joi.number().integer().required(),
+    unitid: Joi.number().integer().required(),
 });
 export const StockValidation = Joi.object({
     items: Joi.array()
@@ -55,4 +55,9 @@ export const PurchaseSupplierTrackerValidation = Joi.object({
 });
 export const GetPurchaseSupplierTrackerValidation = Joi.object({
     supplierid: Joi.string().required()
+});
+export const SupplierPurchaseinvoiceValidation = Joi.object({
+    supplierid: Joi.string().required(),
+    fromdate: Joi.string().allow('').optional(),
+    todate: Joi.string().allow('').optional(),
 });

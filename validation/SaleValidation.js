@@ -29,3 +29,9 @@ export const SalesCustomerTrackerValidation = Joi.object({
 export const GetSalesCustomerTrackerValidation = Joi.object({
     customerid: Joi.number().integer().required()
 });
+
+export const SalesInvoiceValidation = Joi.object({
+    customerid: Joi.number().integer().required(),
+    fromdate: Joi.string().allow('').optional(),
+    todate: Joi.string().allow('').optional(),
+});

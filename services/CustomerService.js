@@ -1,5 +1,5 @@
 import {pool} from "../db.js";
-import {CustomerValidation,customertypeValidation} from "../validation/CustomerValidation.js";
+import {CustomerValidation, customertypeValidation, CustomerledgerinvoiceValidation} from "../validation/CustomerValidation.js";
 
 const CustomertypeService = async (req) => {
     const { typeName} = req.body;
@@ -26,7 +26,7 @@ const CustomertypeService = async (req) => {
     }
 }
 const CustomerService = async (req) => {
-    const { name,customertypeid } = req.body;
+    const { name,customertypeid, mobno, address, description} = req.body;
     const { error }  = CustomerValidation.validate(req.body);
     if (error) {
         return { code: 400,status:"fail",message: "Validation Error", data: error.details[0].message };
@@ -40,8 +40,8 @@ const CustomerService = async (req) => {
             return { code: 403, status:"fail",  message: "Customer is already exists." };
         }
         const result = await pool.query(
-                'INSERT INTO customer (name,customertypeid) VALUES ($1,$2) RETURNING *;',
-            [name, customertypeid]
+                'INSERT INTO customer (name,customertypeid,mobno, address, description) VALUES ($1,$2,$3,$4,$5) RETURNING *;',
+            [name, customertypeid, mobno, address, description]
         );
         return { code: 201, status:"success", message: "Successfully Created", data: result.rows };
     } catch (e) {
@@ -50,5 +50,42 @@ const CustomerService = async (req) => {
     }
 }
 
+const CustomerledgerinvoiceService = async (req) => {
+    const { customerid, fromdate, todate } = req.query;
 
-export { CustomerService,CustomertypeService };
+    const { error } = CustomerledgerinvoiceValidation.validate(req.query);
+    if (error) {
+        return { code: 400, status: "fail", message: "Validation Error", data: error.details[0].message };
+    }
+
+    const CustomerID = parseInt(customerid);
+    let query = `
+        SELECT c.name, c.address, cl.debit, cl.credit, cl.balance
+        FROM customerledger cl
+                 INNER JOIN customer c ON c.id = cl.customerid
+        WHERE cl.customerid = $1
+    `;
+    const queryParams = [CustomerID];
+
+    if (fromdate) {
+        query += ` AND DATE(cl.createdat) >= $${queryParams.length + 1}`;
+        queryParams.push(fromdate);
+    }
+    if (todate) {
+        query += ` AND DATE(cl.createdat) <= $${queryParams.length + 1}`;
+        queryParams.push(todate);
+    }
+
+    try {
+        const result = await pool.query(query, queryParams);
+        return { code: 201, status: "success", message: "Executed Successfully", data: result.rows };
+    } catch (e) {
+        console.error(e);
+        return { code: 500, status: "fail", message: "Server Error" };
+    }
+};
+
+
+
+
+export { CustomerService,CustomertypeService,CustomerledgerinvoiceService};

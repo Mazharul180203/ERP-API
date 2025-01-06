@@ -4,7 +4,7 @@ import {
     SupplierService,
     UnitService,
     ProductService,
-    StockService, PurchaseSupplierTrackerService, GetPurchaseSupplierTrackerService
+    StockService, PurchaseSupplierTrackerService, GetPurchaseSupplierTrackerService,SupplierPurchaseinvoiceService
 } from "../services/ItemService.js";
 
 
@@ -50,6 +50,11 @@ export const  purchasesuppliertracker =  async (req,res) =>{
 
 export const  getpurchasesuppliertracker =  async (req,res) =>{
     let response = await GetPurchaseSupplierTrackerService(req);
+    res.status(response.code).json({status: response.status,message: response.message, data: response.data || null });
+
+}
+export const  supplierpurchaseinvoice =  async (req,res) =>{
+    let response = await SupplierPurchaseinvoiceService(req);
     res.status(response.code).json({status: response.status,message: response.message, data: response.data || null });
 
 }

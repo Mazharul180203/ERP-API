@@ -3,7 +3,7 @@ import {
     categoryValidation, GetPurchaseSupplierTrackerValidation,
     ProductValidation,
     PurchaseSupplierTrackerValidation,
-    StockValidation,
+    StockValidation, SupplierPurchaseinvoiceValidation,
     supplierValidation,
     unitValidation
 } from "../validation/ItemValidation.js";
@@ -121,7 +121,7 @@ const ProductService = async (req) => {
             return { code: 403, status:"fail",  message: "Product is already exists." };
         }
         const result = await pool.query(
-            'INSERT INTO products (name, categoryId, description,brandId,unitId) VALUES ($1,$2,$3,$4,$5) RETURNING *;',
+            'INSERT INTO products (name, categoryid, description,brandid,unitid) VALUES ($1,$2,$3,$4,$5) RETURNING *;',
             [name, categoryid, description,brandid,unitid]
         );
         return { code: 201, status:"success", message: "Successfully Created", data: result.rows };
@@ -260,6 +260,44 @@ const GetPurchaseSupplierTrackerService = async (req) => {
     }
 }
 
+const SupplierPurchaseinvoiceService = async (req) => {
+    const { supplierid, fromdate, todate } = req.query;
+    console.log("query : ", req.query);
 
+    const { error } = SupplierPurchaseinvoiceValidation.validate(req.query);
+    if (error) {
+        return { code: 400, status: "fail", message: "Validation Error", data: error.details[0].message };
+    }
 
-export {CategoryService,BrandService,UnitService,SupplierService,ProductService,StockService,PurchaseSupplierTrackerService,GetPurchaseSupplierTrackerService}
+    const SupplierID = parseInt(supplierid);
+    let query = `
+        SELECT s.suppliername,
+               SUM(sl.credit) AS TotalCredit,
+               SUM(sl.debit) AS TotalDebit,
+               SUM(sl.credit) - SUM(sl.debit) AS Due
+        FROM supplierledger sl
+                 INNER JOIN supplier s ON s.id = sl.supplierid
+        WHERE sl.supplierid = $1
+    `;
+    const queryParams = [SupplierID];
+    if (fromdate) {
+        query += ` AND DATE(sl.createdat) >= $${queryParams.length + 1}`;
+        queryParams.push(fromdate);
+    }
+    if (todate) {
+        query += ` AND DATE(sl.createdat) <= $${queryParams.length + 1}`;
+        queryParams.push(todate);
+    }
+
+    query += ` GROUP BY s.suppliername`;
+
+    try {
+        const result = await pool.query(query, queryParams);
+        return { code: 201, status: "success", message: "Executed Successfully", data: result.rows };
+    } catch (e) {
+        console.error("Database Error: ", e);
+        return { code: 500, status: "fail", message: "Server Error", data: e.message };
+    }
+};
+
+export {CategoryService,BrandService,UnitService,SupplierService,ProductService,StockService,PurchaseSupplierTrackerService,GetPurchaseSupplierTrackerService,SupplierPurchaseinvoiceService}
